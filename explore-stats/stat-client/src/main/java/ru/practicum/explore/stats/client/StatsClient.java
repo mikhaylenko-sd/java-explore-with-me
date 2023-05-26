@@ -13,7 +13,6 @@ import ru.practicum.explore.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class StatsClient {
@@ -40,10 +39,14 @@ public class StatsClient {
                                        String endDate,
                                        List<String> uris,
                                        boolean unique) {
-        ResponseEntity<List<ViewStatsDto>> response = restTemplate.exchange(statServerUrl + GET_STATS_PATH, HttpMethod.GET,
-                null, new ParameterizedTypeReference<>() {
+        String urisString = String.join(",", uris);
+        ResponseEntity<List<ViewStatsDto>> response = restTemplate.exchange(
+                statServerUrl + GET_STATS_PATH + "?start={start}&end={end}&uris={uris}&unique={unique}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
                 },
-                Map.of("start", startDate, "end", endDate, "uris", uris, "unique", unique)
+                startDate, endDate, urisString, unique
         );
 
         return response.getBody();
