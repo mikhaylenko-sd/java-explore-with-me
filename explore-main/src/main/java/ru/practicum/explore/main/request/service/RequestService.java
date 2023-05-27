@@ -39,7 +39,7 @@ public class RequestService {
 
     public RequestDto createRequest(Long userId, Long eventId) {
         log.info("Создание запроса на участие пользователя в событии userId={}, eventId={}", userId, eventId);
-        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
         List<Request> alreadyExistsRequests = requestRepository.findAllByRequesterIdAndEventId(userId, eventId);
         List<Request> confirmedRequestsByEvent = requestRepository.findAllByStatusAndEventId(Request.RequestStatus.CONFIRMED, eventId);
         checkRequest(userId, stored, alreadyExistsRequests, confirmedRequestsByEvent);
@@ -49,15 +49,15 @@ public class RequestService {
     public RequestDto updCancelStatus(Long userId, Long requestId) {
         log.info("Получен запрос на изменение статуса запроса на участие пользователя userId={}, requestId={}",
                 userId, requestId);
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
-        Request requestStored = requestRepository.findById(requestId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.REQUEST, requestId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
+        Request requestStored = requestRepository.findById(requestId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.REQUEST, requestId));
         requestStored.setStatus(Request.RequestStatus.CANCELED);
         return requestMapper.toRequestDto(requestRepository.save(requestStored));
     }
 
     public List<RequestDto> getAllRequestsForUser(Long userId) {
         log.info("Получение всех запросов пользователя userId={}", userId);
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
         List<Request> storedRequests = requestRepository.findAllByRequesterId(userId);
         return storedRequests
                 .stream()
@@ -67,8 +67,8 @@ public class RequestService {
 
     public List<RequestDto> getAllRequestsByEventId(Long eventId, Long userId) {
         log.info("Получение всех запросов на участие пользователя userId={}, eventId={}", userId, eventId);
-        eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
         List<Request> storedRequests =
                 requestRepository.findAllByEventId(eventId);
         return storedRequests.stream().map(requestMapper::toRequestDto).collect(Collectors.toList());
@@ -76,8 +76,8 @@ public class RequestService {
 
     public RequestListDto updateRequestsStatusForEvent(Long eventId, Long userId, EventRequestStatusUpdateRequest request) {
         log.info("Обновлени запроса пользователя userId={}, eventId={}, request={}", userId, eventId, request);
-        Event storedEvent = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        Event storedEvent = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
         List<Request> requestsForUpdate = requestRepository.findAllByEventIdAndIdIsIn(eventId, request.getRequestIds());
         checkRequestsListForUpdate(request.getStatus(), storedEvent, requestsForUpdate);
         eventRepository.save(storedEvent);
@@ -146,7 +146,7 @@ public class RequestService {
         if (stored.getParticipantLimit() == 0) {
             request.setStatus(Request.RequestStatus.CONFIRMED);
         }
-        User requester = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        User requester = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
         request.setRequester(requester);
         request.setEvent(stored);
         request.setCreated(LocalDateTime.now());

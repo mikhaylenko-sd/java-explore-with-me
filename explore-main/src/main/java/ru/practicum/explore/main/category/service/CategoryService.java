@@ -58,7 +58,7 @@ public class CategoryService {
     public CategoryDto getCategoryById(Long id) {
         log.info("Получение категории id={}", id);
         Category stored = categoryRepository.findById(id).orElseThrow(() ->
-                new NotFoundException(NotFoundException.NOT_FOUND_TYPE.CATEGORY, id)
+                new NotFoundException(NotFoundException.NotFoundType.CATEGORY, id)
         );
         return categoryMapper.toCategoryDto(stored);
     }

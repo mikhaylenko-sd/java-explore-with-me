@@ -83,7 +83,7 @@ public class CompilationService {
 
     private Compilation getCompilationById(Long compId) {
         log.info("Поиск подборки в БД по id={}", compId);
-        return compilationRepository.findById(compId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.COMPILATION, compId)
+        return compilationRepository.findById(compId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.COMPILATION, compId)
         );
     }
 

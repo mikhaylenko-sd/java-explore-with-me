@@ -67,8 +67,8 @@ public class EventService {
 
     public EventFullDto createEvent(Long userId, NewEventDto newEvent) {
         log.info("Создание нового события userId={}, event={}", userId, newEvent);
-        User initiator = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
-        Category stored = categoryRepository.findById(newEvent.getCategory()).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.CATEGORY, newEvent.getCategory()));
+        User initiator = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
+        Category stored = categoryRepository.findById(newEvent.getCategory()).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.CATEGORY, newEvent.getCategory()));
         Event newEventEntity = creatingNewEvent(newEvent, initiator, stored);
         return eventMapper.toEventFullDto(eventRepository.save(newEventEntity));
     }
@@ -76,21 +76,21 @@ public class EventService {
     public List<EventShortDto> getEventsByUserId(Long userId, int from, int size) {
         log.info("Получение информации о событиях пользователем userId={}", userId);
         Pageable pageable = PageRequest.of(from / size, size);
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
         return eventRepository.findAllByInitiatorId(userId, pageable).stream()
                 .map(eventMapper::toEventShortDto).collect(Collectors.toList());
     }
 
     public EventFullDto getEventsByUserAndEventId(Long userId, Long eventId) {
         log.info("Получение информации о событии пользователем");
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
-        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
         return eventMapper.toEventFullDto(stored);
     }
 
     public EventFullDto updateEventsByUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         log.info("Обновление события пользователем");
-        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
         checkUpdateWithStateByUser(userId, updateEventUserRequest, stored);
         return eventMapper.toEventFullDto(eventRepository.save(createUserUpdateEvent(stored, updateEventUserRequest)));
     }
@@ -117,7 +117,7 @@ public class EventService {
 
     public EventFullDto updateEventsByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
         log.info("Обновление события eventId={}, event={}", eventId, updateEventAdminRequest);
-        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
         checkUpdateWithState(stored, updateEventAdminRequest);
         return eventMapper.toEventFullDto(eventRepository.save(createAdminUpdateEvent(stored, updateEventAdminRequest)));
     }
@@ -140,7 +140,7 @@ public class EventService {
         log.info("Получение информации о событии eventId={}", id);
         Event stored = eventRepository.findByIdAndState(id, Event.State.PUBLISHED);
         if (stored == null) {
-            throw new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, id);
+            throw new NotFoundException(NotFoundException.NotFoundType.EVENT, id);
         }
         statsClient.saveHit("explore-main", request.getRequestURI(), request.getRemoteAddr());
         stored.setViews(stored.getViews() + 1);

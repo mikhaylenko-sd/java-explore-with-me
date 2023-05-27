@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class NotFoundException extends BaseException {
-    public enum NOT_FOUND_TYPE {
+    public enum NotFoundType {
         CATEGORY,
         USER,
         COMPILATION,
@@ -12,7 +12,7 @@ public class NotFoundException extends BaseException {
         EVENT
     }
 
-    public NotFoundException(NOT_FOUND_TYPE notFoundType, Long id) {
+    public NotFoundException(NotFoundType notFoundType, Long id) {
         super(null, "Запрашиваемый объект не найден или не доступен");
 
         String errorMessageTemplate = "%s с id=" + id + " не найден%s";
