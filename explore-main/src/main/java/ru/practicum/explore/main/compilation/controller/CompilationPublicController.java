@@ -34,7 +34,7 @@ public class CompilationPublicController {
     @GetMapping("/{compilationId}")
     public ResponseEntity<CompilationDto> getCompilationById(@PathVariable Long compilationId) {
         log.info("Получение подборки событий по его id={}", compilationId);
-        return new ResponseEntity<>(compilationService.getCompilationById(compilationId), HttpStatus.OK);
+        return new ResponseEntity<>(compilationService.getCompilationDtoById(compilationId), HttpStatus.OK);
     }
 
 }

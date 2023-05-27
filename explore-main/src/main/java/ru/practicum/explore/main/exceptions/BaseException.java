@@ -6,13 +6,13 @@ import java.time.LocalDateTime;
 
 @Getter
 public class BaseException extends RuntimeException {
-    private final String message;
+    protected String message;
     private final String reason;
     private final LocalDateTime timestamp;
 
-    public BaseException(String message, String reason, LocalDateTime timestamp) {
+    public BaseException(String message, String reason) {
         this.message = message;
         this.reason = reason;
-        this.timestamp = timestamp;
+        this.timestamp = LocalDateTime.now();
     }
 }

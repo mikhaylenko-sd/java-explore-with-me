@@ -37,11 +37,9 @@ public class RequestService {
         this.requestMapper = requestMapper;
     }
 
-    public RequestDto createRequest(long userId, long eventId) {
-        log.debug("Получен запрос на создание запроса на участие пользователя {}", userId);
-        Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Событие с id" + eventId + "не найдено",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+    public RequestDto createRequest(Long userId, Long eventId) {
+        log.info("Создание запроса на участие пользователя в событии userId={}, eventId={}", userId, eventId);
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
         List<Request> alreadyExistsRequests = requestRepository.findAllByRequesterIdAndEventId(userId, eventId);
         List<Request> confirmedRequestsByEvent = requestRepository.findAllByStatusAndEventId(Request.RequestStatus.CONFIRMED, eventId);
         checkRequest(userId, stored, alreadyExistsRequests, confirmedRequestsByEvent);
@@ -49,22 +47,17 @@ public class RequestService {
     }
 
     public RequestDto updCancelStatus(Long userId, Long requestId) {
-        log.debug("Получен запрос на изменение статуса запроса на участие пользователя {}", userId);
-        userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
-        Request requestStored = requestRepository.findById(requestId).orElseThrow(() ->
-                new NotFoundException("Запрос с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        log.info("Получен запрос на изменение статуса запроса на участие пользователя userId={}, requestId={}",
+                userId, requestId);
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        Request requestStored = requestRepository.findById(requestId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.REQUEST, requestId));
         requestStored.setStatus(Request.RequestStatus.CANCELED);
         return requestMapper.toRequestDto(requestRepository.save(requestStored));
     }
 
     public List<RequestDto> getAllRequestsForUser(Long userId) {
-        log.debug("Получение всех запросов пользователя {}", userId);
-        userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        log.info("Получение всех запросов пользователя userId={}", userId);
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
         List<Request> storedRequests = requestRepository.findAllByRequesterId(userId);
         return storedRequests
                 .stream()
@@ -73,28 +66,22 @@ public class RequestService {
     }
 
     public List<RequestDto> getAllRequestsByEventId(Long eventId, Long userId) {
-        eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Событие с id" + eventId + "не найдено",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
-        userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        log.info("Получение всех запросов на участие пользователя userId={}, eventId={}", userId, eventId);
+        eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
         List<Request> storedRequests =
                 requestRepository.findAllByEventId(eventId);
         return storedRequests.stream().map(requestMapper::toRequestDto).collect(Collectors.toList());
     }
 
-    public RequestListDto updateRequestsStatusForEvent(Long eventId, Long userId, EventRequestStatusUpdateRequest dto) {
-        Event storedEvent = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Событие с id" + eventId + "не найдено",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
-        userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
-        List<Request> requestsForUpdate = requestRepository.findAllByEventIdAndIdIsIn(eventId, dto.getRequestIds());
-        checkRequestsListForUpdate(dto.getStatus(), storedEvent, requestsForUpdate);
+    public RequestListDto updateRequestsStatusForEvent(Long eventId, Long userId, EventRequestStatusUpdateRequest request) {
+        log.info("Обновлени запроса пользователя userId={}, eventId={}, request={}", userId, eventId, request);
+        Event storedEvent = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        List<Request> requestsForUpdate = requestRepository.findAllByEventIdAndIdIsIn(eventId, request.getRequestIds());
+        checkRequestsListForUpdate(request.getStatus(), storedEvent, requestsForUpdate);
         eventRepository.save(storedEvent);
-        return createRequestListDto(dto.getRequestIds());
+        return createRequestListDto(request.getRequestIds());
     }
 
     private RequestListDto createRequestListDto(List<Long> idRequests) {
@@ -118,12 +105,10 @@ public class RequestService {
             if (storedEvent.getParticipantLimit() == confirmedRequestByEvent.size()) {
                 request.setStatus(Request.RequestStatus.REJECTED);
                 requestRepository.save(request);
-                throw new BaseException("Мест нет",
-                        "Нет свободных мест в событии", LocalDateTime.now());
+                throw new BaseException("Мест нет", "Нет свободных мест в событии");
             }
             if (!request.getStatus().equals(Request.RequestStatus.PENDING)) {
-                throw new BaseException("Запрос не в ожидании",
-                        "Обновление возможно для статсуса" + Request.RequestStatus.PENDING, LocalDateTime.now());
+                throw new BaseException("Запрос не в ожидании", "Обновление возможно для статсуса" + Request.RequestStatus.PENDING);
             }
             if (newStatus.equals(Request.RequestStatus.CONFIRMED)) {
                 request.setStatus(Request.RequestStatus.CONFIRMED);
@@ -138,20 +123,16 @@ public class RequestService {
 
     private void checkRequest(long userId, Event stored, List<Request> alreadyExistsRequests, List<Request> confirmedRequestsByEvent) {
         if (alreadyExistsRequests.size() != 0) {
-            throw new BaseException("Попытка повторного запроса",
-                    "Нельзя повторно отправлять запрос на участие", LocalDateTime.now());
+            throw new BaseException("Попытка повторного запроса", "Нельзя повторно отправлять запрос на участие");
         }
         if (confirmedRequestsByEvent.size() >= stored.getParticipantLimit() && stored.getParticipantLimit() > 0) {
-            throw new BaseException("На данном событии уже достигнут лимит участников",
-                    "Нельзя записаться на событие, так нет свободных мест", LocalDateTime.now());
+            throw new BaseException("На данном событии уже достигнут лимит участников", "Нельзя записаться на событие, так нет свободных мест");
         }
         if (stored.getInitiator().getId() == userId) {
-            throw new BaseException("Вы инициатор",
-                    "Нельзя ходить на свои мероприятия как гость", LocalDateTime.now());
+            throw new BaseException("Вы инициатор", "Нельзя ходить на свои мероприятия как гость");
         }
         if (!stored.getState().equals(Event.State.PUBLISHED)) {
-            throw new BaseException("Событие не опубликовано",
-                    "Нельзя подать запрос на неопубликованное событие", LocalDateTime.now());
+            throw new BaseException("Событие не опубликовано", "Нельзя подать запрос на неопубликованное событие");
         }
     }
 
@@ -165,9 +146,7 @@ public class RequestService {
         if (stored.getParticipantLimit() == 0) {
             request.setStatus(Request.RequestStatus.CONFIRMED);
         }
-        User requester = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        User requester = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
         request.setRequester(requester);
         request.setEvent(stored);
         request.setCreated(LocalDateTime.now());

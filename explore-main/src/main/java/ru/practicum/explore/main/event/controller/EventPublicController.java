@@ -42,7 +42,7 @@ public class EventPublicController {
         log.info("Получение событий с параметрами text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}, uri={}",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request.getRequestURI());
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
-            throw new RequestValidationException("Error dates", "Дата начала диапозона должна быть меньше даты конца.", LocalDateTime.now());
+            throw new RequestValidationException("Error dates", "Дата начала диапозона должна быть меньше даты конца.");
         }
         return new ResponseEntity<>(
                 eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request),

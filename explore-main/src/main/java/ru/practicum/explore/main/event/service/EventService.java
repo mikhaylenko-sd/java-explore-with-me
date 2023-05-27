@@ -66,113 +66,81 @@ public class EventService {
     }
 
     public EventFullDto createEvent(Long userId, NewEventDto newEvent) {
-        log.info("Создание события в категории {}", newEvent.getCategory());
-        User initiator = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
-        Category stored = categoryRepository.findById(newEvent.getCategory()).orElseThrow(() ->
-                new NotFoundException("Категория с id" + newEvent.getCategory() + "не найдена",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        log.info("Создание нового события userId={}, event={}", userId, newEvent);
+        User initiator = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        Category stored = categoryRepository.findById(newEvent.getCategory()).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.CATEGORY, newEvent.getCategory()));
         Event newEventEntity = creatingNewEvent(newEvent, initiator, stored);
         return eventMapper.toEventFullDto(eventRepository.save(newEventEntity));
     }
 
     public List<EventShortDto> getEventsByUserId(Long userId, int from, int size) {
-        log.info("Получение информации о событии пользователем");
+        log.info("Получение информации о событиях пользователем userId={}", userId);
         Pageable pageable = PageRequest.of(from / size, size);
-        userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
         return eventRepository.findAllByInitiatorId(userId, pageable).stream()
                 .map(eventMapper::toEventShortDto).collect(Collectors.toList());
     }
 
     public EventFullDto getEventsByUserAndEventId(Long userId, Long eventId) {
         log.info("Получение информации о событии пользователем");
-        userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + userId + "не найден",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
-        Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Событие с id" + eventId + "не найдено",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.USER, userId));
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
         return eventMapper.toEventFullDto(stored);
     }
 
     public EventFullDto updateEventsByUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         log.info("Обновление события пользователем");
-        Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Событие с id" + eventId + "не найдено",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
         checkUpdateWithStateByUser(userId, updateEventUserRequest, stored);
         return eventMapper.toEventFullDto(eventRepository.save(createUserUpdateEvent(stored, updateEventUserRequest)));
     }
 
     private void checkUpdateWithStateByUser(Long userId, UpdateEventUserRequest updateEventUserRequest, Event stored) {
         if (!stored.getInitiator().getId().equals(userId)) {
-            throw new BaseException(
-                    "Условия выполнения не соблюдены", "Изменять может только владелец", LocalDateTime.now()
-            );
+            throw new BaseException("Условия выполнения не соблюдены", "Изменять может только владелец");
         }
         if (stored.getState().equals(Event.State.PUBLISHED)) {
-            throw new BaseException(
-                    "Условия выполнения не соблюдены", "Изменять можно неопубликованные события", LocalDateTime.now()
-            );
+            throw new BaseException("Условия выполнения не соблюдены", "Изменять можно неопубликованные события");
         }
         if (updateEventUserRequest.getEventDate() != null) {
             if (updateEventUserRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                throw new BaseException(
-                        "Условия выполнения не соблюдены", "Изменять можно события за 2 часа до начала", LocalDateTime.now()
-                );
+                throw new BaseException("Условия выполнения не соблюдены", "Изменять можно события за 2 часа до начала");
             }
         }
         if (stored.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new BaseException(
-                    "Условия выполнения не соблюдены", "Изменять можно события за 2 часа до начала", LocalDateTime.now()
-            );
+            throw new BaseException("Условия выполнения не соблюдены", "Изменять можно события за 2 часа до начала");
         }
         if (stored.getParticipantLimit() == 0) {
-            throw new BaseException("Мест нет", "Нет свободных мест в событиии", LocalDateTime.now());
+            throw new BaseException("Мест нет", "Нет свободных мест в событиии");
         }
     }
 
     public EventFullDto updateEventsByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
-        log.info("Обновление события админом");
-        Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Событие с id" + eventId + "не найдено",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        log.info("Обновление события eventId={}, event={}", eventId, updateEventAdminRequest);
+        Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, eventId));
         checkUpdateWithState(stored, updateEventAdminRequest);
         return eventMapper.toEventFullDto(eventRepository.save(createAdminUpdateEvent(stored, updateEventAdminRequest)));
     }
 
     private void checkUpdateWithState(Event stored, UpdateEventAdminRequest updateEventAdminRequest) {
         if (!Objects.equals(Event.State.PENDING, stored.getState())) {
-            throw new BaseException(
-                    "Условия выполнения не соблюдены",
-                    "Изменять можно неопубликованные события",
-                    LocalDateTime.now());
+            throw new BaseException("Условия выполнения не соблюдены", "Изменять можно неопубликованные события");
         }
         if (stored.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new BaseException(
-                    "Неверно указана дата события",
-                    "Дата события не может быть менее чем за 1 час до начала",
-                    LocalDateTime.now());
+            throw new BaseException("Неверно указана дата события", "Дата события не может быть менее чем за 1 час до начала");
         }
         if (updateEventAdminRequest.getEventDate() != null) {
             if (updateEventAdminRequest.getEventDate().isBefore(LocalDateTime.now())) {
-                throw new BaseException(
-                        "Условия выполнения не соблюдены",
-                        "Новое время в прошлом",
-                        LocalDateTime.now());
+                throw new BaseException("Условия выполнения не соблюдены", "Новое время в прошлом");
             }
         }
     }
 
     public EventFullDto getEventById(Long id, HttpServletRequest request) {
-        log.info("Получение информации пользователем public");
+        log.info("Получение информации о событии eventId={}", id);
         Event stored = eventRepository.findByIdAndState(id, Event.State.PUBLISHED);
         if (stored == null) {
-            throw new NotFoundException("Событие с id" + id + "не найдено",
-                    "Запрашиваемый объект не найден или не доступен", LocalDateTime.now());
+            throw new NotFoundException(NotFoundException.NOT_FOUND_TYPE.EVENT, id);
         }
         statsClient.saveHit("explore-main", request.getRequestURI(), request.getRemoteAddr());
         stored.setViews(stored.getViews() + 1);
@@ -191,13 +159,12 @@ public class EventService {
             pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "views"));
         }
         log.info("Получение информации о событиях с фильтрами public из репозиория");
-        List<EventFullDto> eventFullDtoList = eventCriteriaRepository.findAllByTextAndCategoryIdInAndPaidAndEventDateBetweenAndAvailable(
+        return eventCriteriaRepository.findAllByTextAndCategoryIdInAndPaidAndEventDateBetweenAndAvailable(
                         text, categories, paid, rangeStart, rangeEnd, onlyAvailable, pageable
-                )
-                .stream()
+                ).stream()
                 .map(eventMapper::toEventFullDto)
+                .map(this::preparingFullDtoWithStat)
                 .collect(Collectors.toList());
-        return eventFullDtoList.stream().map(this::preparingFullDtoWithStat).collect(Collectors.toList());
     }
 
     public List<EventFullDto> getEventsForAdmin(List<Long> users, List<Event.State> states, List<Long> categories,
@@ -206,13 +173,12 @@ public class EventService {
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
         log.info("Получение информации о событиях с фильтрами admin из репозиория");
 
-        List<EventFullDto> eventFullDtoList = eventCriteriaRepository.findAllByInitiatorIdInAndStateInAndCategoryIdInAndEventDateBetween(
+        return eventCriteriaRepository.findAllByInitiatorIdInAndStateInAndCategoryIdInAndEventDateBetween(
                         users, states, categories, rangeStart, rangeEnd, pageable
-                )
-                .stream()
+                ).stream()
                 .map(eventMapper::toEventFullDto)
+                .map(this::preparingFullDtoWithStat)
                 .collect(Collectors.toList());
-        return eventFullDtoList.stream().map(this::preparingFullDtoWithStat).collect(Collectors.toList());
     }
 
     private Event createAdminUpdateEvent(Event stored, UpdateEventAdminRequest updateEventAdminRequest) {

@@ -2,12 +2,37 @@ package ru.practicum.explore.main.exceptions;
 
 import lombok.Getter;
 
-import java.time.LocalDateTime;
-
 @Getter
 public class NotFoundException extends BaseException {
+    public enum NOT_FOUND_TYPE {
+        CATEGORY,
+        USER,
+        COMPILATION,
+        REQUEST,
+        EVENT
+    }
 
-    public NotFoundException(String massage, String reason, LocalDateTime timestamp) {
-        super(massage, reason, timestamp);
+    public NotFoundException(NOT_FOUND_TYPE notFoundType, Long id) {
+        super(null, "Запрашиваемый объект не найден или не доступен");
+
+        String errorMessageTemplate = "%s с id=" + id + " не найден%s";
+        switch (notFoundType) {
+            case CATEGORY:
+                errorMessageTemplate = String.format(errorMessageTemplate, "Категория", "а");
+                break;
+            case USER:
+                errorMessageTemplate = String.format(errorMessageTemplate, "Пользователь", "");
+                break;
+            case COMPILATION:
+                errorMessageTemplate = String.format(errorMessageTemplate, "Подборка", "а");
+                break;
+            case REQUEST:
+                errorMessageTemplate = String.format(errorMessageTemplate, "Запрос", "");
+                break;
+            case EVENT:
+                errorMessageTemplate = String.format(errorMessageTemplate, "Событие", "о");
+                break;
+        }
+        message = errorMessageTemplate;
     }
 }

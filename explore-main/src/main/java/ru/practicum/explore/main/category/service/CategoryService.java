@@ -14,7 +14,6 @@ import ru.practicum.explore.main.category.repository.CategoryRepository;
 import ru.practicum.explore.main.exceptions.BaseException;
 import ru.practicum.explore.main.exceptions.NotFoundException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -30,48 +29,37 @@ public class CategoryService {
         this.categoryMapper = categoryMapper;
     }
 
-    public CategoryDto createCategory(NewCategoryDto category) {
-        log.debug("Получен запрос на создание категории {}", category.getName());
-        if (categoryRepository.findAll()
-                .stream()
-                .anyMatch(c -> c.getName().equals(category.getName()))) {
-            throw new BaseException("Имя уже используется", "Не соблюдены условия уникальности имени",
-                    LocalDateTime.now());
-        }
-        return categoryMapper.toCategoryDto(categoryRepository.save(categoryMapper.toCategory(category)));
+    public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
+        log.info("Создание новой категории name={}", newCategoryDto.getName());
+        checkNameForUniq(null, newCategoryDto.getName());
+        return categoryMapper.toCategoryDto(categoryRepository.save(categoryMapper.toCategory(newCategoryDto)));
     }
 
     public void deleteCategory(Long id) {
-        log.debug("Получен запрос на удаление категории {}", id);
-        categoryRepository.findById(id).orElseThrow(() ->
-                new NotFoundException("Категория с id" + id + "не найдена", "Запрашиваемый объект не найден или не доступен",
-                        LocalDateTime.now()));
+        log.info("Удаление категории id={}", id);
+        getCategoryById(id);
         try {
             categoryRepository.deleteById(id);
         } catch (DataIntegrityViolationException e) {
-            throw new BaseException(
-                    "Условия выполнения не соблюдены",
-                    "Удалять можно только непривязанную категорию",
-                    LocalDateTime.now());
+            throw new BaseException("Условия выполнения не соблюдены", "Удалять можно только непривязанную категорию");
         }
     }
 
     public CategoryDto update(Long id, CategoryDto updatingDto) {
-        log.debug("Получен запрос обновления категории пользователем с id {}", id);
-        Category stored = categoryRepository.findById(id).orElseThrow(() ->
-                new NotFoundException("Категория с id" + id + "не найдена", "Запрашиваемый объект не найден или не доступен",
-                        LocalDateTime.now()));
-        checkNameForUniq(id, updatingDto);
+        log.info("Обновление категории пользователем с id={}, category={}", id, updatingDto);
+        CategoryDto storedDto = getCategoryById(id);
+        checkNameForUniq(id, updatingDto.getName());
+        Category stored = categoryMapper.toCategory(storedDto);
         categoryMapper.toCategory(updatingDto, stored);
         Category actualCategory = categoryRepository.save(stored);
         return categoryMapper.toCategoryDto(actualCategory);
     }
 
     public CategoryDto getCategoryById(Long id) {
-        log.debug("Получен запрос на получение категории {}", id);
+        log.info("Получение категории id={}", id);
         Category stored = categoryRepository.findById(id).orElseThrow(() ->
-                new NotFoundException("Категория с id" + id + "не найдена", "Запрашиваемый объект не найден или не доступен",
-                        LocalDateTime.now()));
+                new NotFoundException(NotFoundException.NOT_FOUND_TYPE.CATEGORY, id)
+        );
         return categoryMapper.toCategoryDto(stored);
     }
 
@@ -84,11 +72,10 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    private void checkNameForUniq(Long id, CategoryDto updatingDto) {
-        if (StringUtils.isNotBlank(updatingDto.getName()) && categoryRepository.findAll().stream()
-                .anyMatch(u -> u.getName().equals(updatingDto.getName()) && !Objects.equals(u.getId(), id))) {
-            throw new BaseException("Имя категории уже используется", "Не соблюдены условия уникальности имени",
-                    LocalDateTime.now());
+    private void checkNameForUniq(Long id, String categoryName) {
+        if (StringUtils.isNotBlank(categoryName) && categoryRepository.findAll().stream()
+                .anyMatch(u -> u.getName().equals(categoryName) && !Objects.equals(u.getId(), id))) {
+            throw new BaseException("Имя категории уже используется", "Не соблюдены условия уникальности имени");
         }
     }
 }

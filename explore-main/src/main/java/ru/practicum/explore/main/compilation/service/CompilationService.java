@@ -50,17 +50,15 @@ public class CompilationService {
     }
 
     public void deleteCompilationById(Long compId) {
-        log.info("Удаление подборки admin");
-        compilationRepository.findById(compId).orElseThrow(() ->
-                new NotFoundException("Подборка с id" + compId + "не найдена",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        log.info("Удаление подборки id={}", compId);
+        getCompilationById(compId);
         compilationRepository.deleteById(compId);
     }
 
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
-        log.info("Создание новой подборки admin");
+        log.info("Создание новой подборки compilation={}", newCompilationDto);
         if (newCompilationDto.getTitle() == null) {
-            throw new RequestValidationException("Пустой заголовок", "Заголовок не может быть пустым", LocalDateTime.now());
+            throw new RequestValidationException("Пустой заголовок", "Заголовок не может быть пустым");
         }
         List<Event> storedEvents = eventRepository.findAllByIdIsIn(newCompilationDto.getEvents());
         Compilation compilation = new Compilation(null, storedEvents, newCompilationDto.isPinned(), newCompilationDto.getTitle());
@@ -69,26 +67,28 @@ public class CompilationService {
     }
 
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest updateCompilationRequest) {
-        log.info("Обновление подборки подборки admin");
-        Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
-                new NotFoundException("Подборка с id" + compId + "не найдена",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+        log.info("Обновление подборки id={}, compilation={}", compId, updateCompilationRequest);
+        Compilation compilation = getCompilationById(compId);
         Compilation newCompilation = createCompilationForUpdate(compilation, updateCompilationRequest);
         compilationRepository.save(newCompilation);
         return createCompilationDto(newCompilation);
     }
 
 
-    public CompilationDto getCompilationById(Long compId) {
-        log.info("Получение подборки по id {}", compId);
-        Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
-                new NotFoundException("Подборка с id" + compId + "не найдена",
-                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
+    public CompilationDto getCompilationDtoById(Long compId) {
+        log.info("Получение подборки по id={}", compId);
+        Compilation compilation = getCompilationById(compId);
         return createCompilationDto(compilation);
     }
 
+    private Compilation getCompilationById(Long compId) {
+        log.info("Поиск подборки в БД по id={}", compId);
+        return compilationRepository.findById(compId).orElseThrow(() -> new NotFoundException(NotFoundException.NOT_FOUND_TYPE.COMPILATION, compId)
+        );
+    }
+
     public List<CompilationDto> getAllCompilations(Boolean pinned, Integer from, Integer size) {
-        log.info("Получение всех подборок с пагинацией и привзкой {}", pinned);
+        log.info("Получение всех подборок с пагинацией и привязкой={}", pinned);
         PageRequest pageRequest = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
 
         Page<Compilation> compilations;
@@ -116,15 +116,12 @@ public class CompilationService {
     }
 
     private CompilationDto createCompilationDto(Compilation compilation) {
-        List<EventFullDto> eventFullDtoList = compilation.getEvents()
+        List<EventShortDto> eventShortDtos = compilation.getEvents()
                 .stream()
                 .map(eventMapper::toEventFullDto)
-                .collect(Collectors.toList());
-        List<EventShortDto> eventFullDtoListWithViews = eventFullDtoList
-                .stream()
                 .map(this::preparingFullDtoWithStat)
                 .collect(Collectors.toList());
-        return new CompilationDto(eventFullDtoListWithViews, compilation.getId(),
+        return new CompilationDto(eventShortDtos, compilation.getId(),
                 compilation.isPinned(), compilation.getTitle());
     }
 
