@@ -102,12 +102,9 @@ public class EventService {
         if (stored.getState().equals(Event.State.PUBLISHED)) {
             throw new BaseException("Условия выполнения не соблюдены", "Изменять можно неопубликованные события");
         }
-        if (updateEventUserRequest.getEventDate() != null) {
-            if (updateEventUserRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                throw new BaseException("Условия выполнения не соблюдены", "Изменять можно события за 2 часа до начала");
-            }
-        }
-        if (stored.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+        LocalDateTime borderTime = LocalDateTime.now().plusHours(2);
+        if (updateEventUserRequest.getEventDate() != null && updateEventUserRequest.getEventDate().isBefore(borderTime)
+                || stored.getEventDate().isBefore(borderTime)) {
             throw new BaseException("Условия выполнения не соблюдены", "Изменять можно события за 2 часа до начала");
         }
         if (stored.getParticipantLimit() == 0) {

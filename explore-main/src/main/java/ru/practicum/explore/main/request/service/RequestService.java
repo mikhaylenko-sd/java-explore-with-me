@@ -69,9 +69,9 @@ public class RequestService {
         log.info("Получение всех запросов на участие пользователя userId={}, eventId={}", userId, eventId);
         eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
-        List<Request> storedRequests =
-                requestRepository.findAllByEventId(eventId);
-        return storedRequests.stream().map(requestMapper::toRequestDto).collect(Collectors.toList());
+        return requestRepository.findAllByEventId(eventId).stream()
+                .map(requestMapper::toRequestDto)
+                .collect(Collectors.toList());
     }
 
     public RequestListDto updateRequestsStatusForEvent(Long eventId, Long userId, EventRequestStatusUpdateRequest request) {

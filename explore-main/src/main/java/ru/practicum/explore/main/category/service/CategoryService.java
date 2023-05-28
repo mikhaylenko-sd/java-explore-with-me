@@ -73,8 +73,13 @@ public class CategoryService {
     }
 
     private void checkNameForUniq(Long id, String categoryName) {
-        if (StringUtils.isNotBlank(categoryName) && categoryRepository.findAll().stream()
-                .anyMatch(u -> u.getName().equals(categoryName) && !Objects.equals(u.getId(), id))) {
+        if (StringUtils.isBlank(categoryName)) {
+            return;
+        }
+        boolean isDuplicate = categoryRepository.findAll().stream()
+                .anyMatch(u -> u.getName().equals(categoryName) && !Objects.equals(u.getId(), id));
+
+        if (isDuplicate) {
             throw new BaseException("Имя категории уже используется", "Не соблюдены условия уникальности имени");
         }
     }
