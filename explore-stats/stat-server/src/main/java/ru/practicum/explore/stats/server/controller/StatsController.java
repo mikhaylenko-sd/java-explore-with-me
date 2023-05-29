@@ -20,7 +20,6 @@ import java.util.List;
 @RestController
 @RequestMapping
 @Slf4j
-//@Validated
 public class StatsController {
 
     private final StatsServiceImpl statsService;
@@ -35,6 +34,10 @@ public class StatsController {
                                            @RequestParam(required = false) List<String> uris,
                                            @RequestParam(defaultValue = "false") boolean unique) {
         log.info("Получен запрос к эндпоинту {} /stats?start={}&end={}&uris={}&unique={}", "GET", start, end, uris, unique);
+        if (start.isAfter(end)) {
+            log.error("Дата начала должна быть меньше даты конца диапозона");
+            return ResponseEntity.badRequest().build();
+        }
         return new ResponseEntity<>(statsService.getStats(start, end, uris, unique), HttpStatus.OK);
     }
 

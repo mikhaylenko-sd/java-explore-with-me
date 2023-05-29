@@ -5,34 +5,44 @@ services:
     ports:
       - "9090:9090"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/statServiceDb
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=iamroot
+      - DB_NAME=statServiceDb
+      - DB_HOST=stats-db
+      - DB_PORT=5432
     depends_on:
       - stats-db
 
   stats-db:
     image: postgres:14-alpine
     ports:
-      - "5432:5432"
+      - "5437:5432"
+    container_name: stats-db-container
     environment:
       - POSTGRES_DB=statServiceDb
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=iamroot
 
-  explore-main:
+  explore-main-db:
+    image: postgres:14-alpine
+    ports:
+      - "5438:5432"
+    container_name: explore-main-db-container
+    environment:
+      - POSTGRES_DB=exploreMainServiceDb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=iamroot
+
+  explore-main-server:
     build: explore-main/
     ports:
       - "8080:8080"
     depends_on:
-      - stats-server
-#      - ewb-db
-#
-#  ewm-db:
-#    image: postgres:14-alpine
-#    ports:
-#      - "5432:5432"
-#    environment:
-#      - POSTGRES_DB=statServiceDb
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=iamroot
+      - explore-main-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=iamroot
+      - STAT_SERVER_URL=http://stats-server:9090
+      - DB_NAME=exploreMainServiceDb
+      - DB_HOST=explore-main-db
+      - DB_PORT=5432
