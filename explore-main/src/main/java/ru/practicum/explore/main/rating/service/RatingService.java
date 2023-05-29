@@ -39,23 +39,23 @@ public class RatingService {
         this.userMapper = userMapper;
     }
 
-    public void changeRating(Long userId, Long eventId, Boolean rating) {
-        Rating.RatingId ratingId = validateAndConstructRatingId(userId, eventId);
+    public void changeRating(Long userId, Long eventId, Boolean ratingValue) {
+        Rating rating = validateAndConstructRatingId(userId, eventId, ratingValue);
 
-        if (rating == null) {
-            if (ratingRepository.existsById(ratingId)) {
-                ratingRepository.deleteById(ratingId);
-                recalculateEventRating(ratingId.getEvent());
+        if (ratingValue == null) {
+            if (ratingRepository.existsById(rating.getId())) {
+                ratingRepository.deleteById(rating.getId());
+                recalculateEventRating(rating.getEvent());
                 log.info("Рейтинг удален");
             }
         } else {
-            ratingRepository.save(new Rating(ratingId, rating));
-            recalculateEventRating(ratingId.getEvent());
+            ratingRepository.save(rating);
+            recalculateEventRating(rating.getEvent());
             log.info("Событию проставлен рейтинг");
         }
     }
 
-    private Rating.RatingId validateAndConstructRatingId(Long userId, Long eventId) {
+    private Rating validateAndConstructRatingId(Long userId, Long eventId, Boolean ratingValue) {
         Optional<User> user = userRepository.findById(userId);
         if (user.isEmpty()) {
             throw new NotFoundException(NotFoundException.NotFoundType.USER, userId);
@@ -69,7 +69,10 @@ public class RatingService {
                     String.format("Для проставления рейтинга событие должно быть опубликовано, текущий статус=%s", event.get().getState()));
         }
 
-        return new Rating.RatingId(event.get(), user.get());
+        return new Rating(
+                new Rating.RatingId(event.get().getId(), user.get().getId()),
+                event.get(), user.get(), ratingValue
+        );
     }
 
     private void recalculateEventRating(Event event) {
@@ -77,7 +80,7 @@ public class RatingService {
         int likeCount = 0;
         int dislikeCount = 0;
         for (Rating rating : ratings) {
-            if (rating.isLike()) {
+            if (rating.getIsLike()) {
                 likeCount++;
             } else {
                 dislikeCount++;
@@ -96,10 +99,10 @@ public class RatingService {
         List<Rating> ratings = ratingRepository.findAllById_EventId(eventId);
         EventRatingsDto eventRatingsDto = new EventRatingsDto();
         for (Rating rating : ratings) {
-            if (rating.isLike()) {
-                eventRatingsDto.getLikes().add(userMapper.toUserDto(rating.getId().getUser()));
+            if (rating.getIsLike()) {
+                eventRatingsDto.getLikes().add(userMapper.toUserDto(rating.getUser()));
             } else {
-                eventRatingsDto.getDislikes().add(userMapper.toUserDto(rating.getId().getUser()));
+                eventRatingsDto.getDislikes().add(userMapper.toUserDto(rating.getUser()));
             }
         }
         return eventRatingsDto;

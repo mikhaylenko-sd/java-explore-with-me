@@ -28,21 +28,27 @@ public class Rating {
     @EmbeddedId
     private RatingId id;
 
+    @ManyToOne
+    @JoinColumn(name = "event_id", updatable = false, insertable = false)
+    private Event event;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", updatable = false, insertable = false)
+    private User user;
+
     @Column(name = "is_like")
-    private boolean isLike;
+    private Boolean isLike;
 
     @Embeddable
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor
     public static class RatingId implements Serializable {
-        @ManyToOne
-        @JoinColumn(name = "event_id")
-        private Event event;
+        @Column(name = "event_id")
+        private Long eventId;
 
-        @ManyToOne
-        @JoinColumn(name = "user_id")
-        private User user;
+        @Column(name = "user_id")
+        private Long userId;
     }
 }
 
