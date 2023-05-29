@@ -57,6 +57,6 @@ public class EventPublicController {
     }
 
     public enum FilterSort {
-        EVENT_DATE, VIEWS
+        EVENT_DATE, VIEWS, RATING
     }
 }

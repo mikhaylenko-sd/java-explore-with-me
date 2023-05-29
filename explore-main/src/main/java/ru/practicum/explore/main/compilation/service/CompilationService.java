@@ -17,6 +17,7 @@ import ru.practicum.explore.main.event.model.Event;
 import ru.practicum.explore.main.event.repository.EventRepository;
 import ru.practicum.explore.main.exceptions.NotFoundException;
 import ru.practicum.explore.main.exceptions.RequestValidationException;
+import ru.practicum.explore.main.rating.service.RatingService;
 import ru.practicum.explore.main.request.model.Request;
 import ru.practicum.explore.main.request.repository.RequestRepository;
 import ru.practicum.explore.stats.client.StatsClient;
@@ -35,17 +36,22 @@ public class CompilationService {
     private final CompilationRepository compilationRepository;
 
     private final EventMapper eventMapper;
+
+    private final RatingService ratingService;
     DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final StatsClient statsClient;
 
     public CompilationService(EventRepository eventRepository,
                               RequestRepository requestRepository,
                               CompilationRepository compilationRepository,
-                              EventMapper eventMapper, StatsClient statsClient) {
+                              EventMapper eventMapper,
+                              RatingService ratingService,
+                              StatsClient statsClient) {
         this.eventRepository = eventRepository;
         this.requestRepository = requestRepository;
         this.compilationRepository = compilationRepository;
         this.eventMapper = eventMapper;
+        this.ratingService = ratingService;
         this.statsClient = statsClient;
     }
 
@@ -83,8 +89,8 @@ public class CompilationService {
 
     private Compilation getCompilationById(Long compId) {
         log.info("Поиск подборки в БД по id={}", compId);
-        return compilationRepository.findById(compId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.COMPILATION, compId)
-        );
+        return compilationRepository.findById(compId)
+                .orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.COMPILATION, compId));
     }
 
     public List<CompilationDto> getAllCompilations(Boolean pinned, Integer from, Integer size) {
@@ -121,8 +127,7 @@ public class CompilationService {
                 .map(eventMapper::toEventFullDto)
                 .map(this::preparingFullDtoWithStat)
                 .collect(Collectors.toList());
-        return new CompilationDto(eventShortDtos, compilation.getId(),
-                compilation.isPinned(), compilation.getTitle());
+        return new CompilationDto(eventShortDtos, compilation.getId(), compilation.isPinned(), compilation.getTitle());
     }
 
     private EventShortDto preparingFullDtoWithStat(EventFullDto eventFullDto) {
@@ -135,6 +140,7 @@ public class CompilationService {
         List<Request> confirmedRequests = requestRepository.findAllByStatusAndEventId(Request.RequestStatus.CONFIRMED,
                 eventFullDto.getId());
         eventFullDto.setConfirmedRequests(confirmedRequests.size());
+        eventMapper.toEventFullDto(ratingService.getEventRatings(eventFullDto.getId()), eventFullDto);
         return eventMapper.toEventShortDto(eventFullDto);
     }
 }

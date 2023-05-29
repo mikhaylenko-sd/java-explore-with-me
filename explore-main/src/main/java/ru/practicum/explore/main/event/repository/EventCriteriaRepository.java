@@ -3,6 +3,7 @@ package ru.practicum.explore.main.event.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.stereotype.Repository;
 import ru.practicum.explore.main.event.model.Event;
 
@@ -36,12 +37,12 @@ public class EventCriteriaRepository {
         CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
         Root<Event> eventRoot = criteriaQuery.from(Event.class);
         Predicate predicate = createAdminPredicate(users, states, categories, rangeStart, rangeEnd, eventRoot);
+        criteriaQuery.where(predicate);
 
-        return getEvents(pageable, criteriaQuery, predicate);
+        return getEvents(pageable, criteriaQuery);
     }
 
-    private Page<Event> getEvents(Pageable pageable, CriteriaQuery<Event> criteriaQuery, Predicate predicate) {
-        criteriaQuery.where(predicate);
+    private Page<Event> getEvents(Pageable pageable, CriteriaQuery<Event> criteriaQuery) {
         TypedQuery<Event> typedQuery = entityManager.createQuery(criteriaQuery);
         typedQuery.setFirstResult(pageable.getPageNumber() * pageable.getPageSize());
         typedQuery.setMaxResults(pageable.getPageSize());
@@ -58,8 +59,9 @@ public class EventCriteriaRepository {
         CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
         Root<Event> eventRoot = criteriaQuery.from(Event.class);
         Predicate predicate = createUserPredicate(text, categories, paid, rangeStart, rangeEnd, available, eventRoot);
-
-        return getEvents(pageable, criteriaQuery, predicate);
+        criteriaQuery.where(predicate);
+        criteriaQuery.orderBy(QueryUtils.toOrders(pageable.getSort(), eventRoot, criteriaBuilder));
+        return getEvents(pageable, criteriaQuery);
     }
 
     private Predicate createAdminPredicate(List<Long> users, List<Event.State> states,

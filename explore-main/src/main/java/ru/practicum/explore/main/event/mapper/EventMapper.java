@@ -10,6 +10,7 @@ import ru.practicum.explore.main.event.dto.EventShortDto;
 import ru.practicum.explore.main.event.dto.UpdateEventAdminRequest;
 import ru.practicum.explore.main.event.dto.UpdateEventUserRequest;
 import ru.practicum.explore.main.event.model.Event;
+import ru.practicum.explore.main.rating.dto.EventRatingsDto;
 import ru.practicum.explore.main.user.mapper.UserMapper;
 
 @Mapper(componentModel = "spring",
@@ -30,4 +31,8 @@ public interface EventMapper {
     @Mapping(target = "state", ignore = true)
     @Mapping(target = "category", ignore = true)
     Event toEvent(UpdateEventAdminRequest updateEventAdminRequest, @MappingTarget Event stored);
+
+    EventShortDto toEventShortDto(EventRatingsDto eventRatingsDto, @MappingTarget EventShortDto eventShortDto);
+
+    EventFullDto toEventFullDto(EventRatingsDto eventRatingsDto, @MappingTarget EventFullDto eventFullDto);
 }
