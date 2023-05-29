@@ -1,0 +1,1528 @@
+{
+	"info": {
+		"_postman_id": "50e71f1e-0549-4670-81f7-4c392275d0af",
+		"name": "Test Explore With Me - рейтинги событий",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27668482"
+	},
+	"item": [
+		{
+			"name": "Validation",
+			"item": [
+				{
+					"name": "Неудачное добавление рейтинга от несуществующего пользователя",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"        pm.collectionVariables.set('userId', 99999);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const api = new API();\r",
+									"const calc = new CalculateUtils();\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 404 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.notFound;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"            url: pm.collectionVariables.get(\"baseUrl\") + \"/events/\" + pm.collectionVariables.get(\"eventId\"),\r",
+									"            method: 'GET',\r",
+									"        }, (error, response) => {\r",
+									"            const event = response.json();\r",
+									"            pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"                pm.expect(event).to.have.property('likes');\r",
+									"                pm.expect(event).to.have.property('dislikes');\r",
+									"                pm.expect(event).to.have.property('calculatedRating');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"                pm.expect(event.id).to.not.be.null;\r",
+									"                pm.expect(event.calculatedRating).equal(0, 'У события без лайков/дизлайков рейтинг должен быть равен ' + 0)\r",
+									"                pm.expect(event.likes).to.be.an(\"array\");\r",
+									"                pm.expect(event.likes.length).equals(0, 'У события не должно быть лайков');\r",
+									"                pm.expect(event.dislikes).to.be.an(\"array\");\r",
+									"                pm.expect(event.dislikes.length).equal(0, 'У события не должно быть дизлайков');\r",
+									"            });\r",
+									"        });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?isLike=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"events",
+								":eventId",
+								"ratings"
+							],
+							"query": [
+								{
+									"key": "isLike",
+									"value": "true"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								},
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Неудачное добавление лайка на несуществующее событие",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        pm.collectionVariables.set('eventId', 9999999);\r",
+									"        pm.collectionVariables.set('userId', user.id);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 404 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.notFound;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?isLike=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"events",
+								":eventId",
+								"ratings"
+							],
+							"query": [
+								{
+									"key": "isLike",
+									"value": "true"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								},
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Неудачное добавление рейтинга на неопубликованное событие",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        const event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        pm.collectionVariables.set('userId', initiator.id);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const api = new API();\r",
+									"const calc = new CalculateUtils();\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 409 и данные в формате json\", function () {\r",
+									"    pm.response.to.have.status(409);\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"            url: pm.collectionVariables.get(\"baseUrl\") + \"/admin/events?users=\" + pm.collectionVariables.get(\"userId\"),\r",
+									"            method: 'GET',\r",
+									"        }, (error, response) => {\r",
+									"            const events = response.json();\r",
+									"            console.log(events);\r",
+									"            pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"                pm.expect(events[0]).to.have.property('likes');\r",
+									"                pm.expect(events[0]).to.have.property('dislikes');\r",
+									"                pm.expect(events[0]).to.have.property('calculatedRating');\r",
+									"            });\r",
+									"\r",
+									"            pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"                pm.expect(events[0].id).to.not.be.null;\r",
+									"                pm.expect(events[0].calculatedRating).equal(0, 'У события без лайков/дизлайков рейтинг должен быть равен ' + 0)\r",
+									"                pm.expect(events[0].likes).to.be.an(\"array\");\r",
+									"                pm.expect(events[0].likes.length).equals(0, 'У события не должно быть лайков');\r",
+									"                pm.expect(events[0].dislikes).to.be.an(\"array\");\r",
+									"                pm.expect(events[0].dislikes.length).equal(0, 'У события не должно быть дизлайков');\r",
+									"            });\r",
+									"        });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?isLike=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"events",
+								":eventId",
+								"ratings"
+							],
+							"query": [
+								{
+									"key": "isLike",
+									"value": "true"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								},
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Sorting",
+			"item": [
+				{
+					"name": "Сортировка сгенерированных событий и рейтингов",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"\r",
+									"        pm.collectionVariables.set('categoryId', category.id);\r",
+									"        pm.collectionVariables.set('from', 0);\r",
+									"        const eventCount = 20;\r",
+									"        pm.collectionVariables.set('size', eventCount);\r",
+									"\r",
+									"\r",
+									"        const userCount = 100;\r",
+									"        const users = [];\r",
+									"        for (let i = 0; i < userCount; i++){\r",
+									"            users[i] = await api.addUser(rnd.getUser())\r",
+									"        }\r",
+									"\r",
+									"        const eventsLikeCounter = [];\r",
+									"        const eventsDislikeCounter = [];\r",
+									"        const eventIndexes = [];\r",
+									"\r",
+									"        for (let i = 0; i < eventCount; i++) {\r",
+									"            let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"            event = await api.publishEvent(event.id);\r",
+									"            eventIndexes[i] = event.id;\r",
+									"            eventsLikeCounter[i] = 0;\r",
+									"            eventsDislikeCounter[i] = 0;\r",
+									"            for (let j = 0; j < userCount; j++) {\r",
+									"                if (Math.random() > 0.5) {\r",
+									"                    const isLike = Math.random() > 0.3;\r",
+									"                    await api.addRatingToEvent(event.id, users[j].id, isLike);\r",
+									"                    if (isLike) {\r",
+									"                        eventsLikeCounter[i]++;\r",
+									"                    } else {\r",
+									"                        eventsDislikeCounter[i]++\r",
+									"                    }\r",
+									"                }\r",
+									"            }\r",
+									"        }\r",
+									"        pm.collectionVariables.set('temp', [eventIndexes, eventsLikeCounter, eventsDislikeCounter]);\r",
+									"\r",
+									"\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const calc = new CalculateUtils();\r",
+									"const temp = pm.collectionVariables.get('temp');\r",
+									"const eventsIndexes = temp[0];\r",
+									"const eventsLikeCounter = temp[1];\r",
+									"const eventsDislikeCounter = temp[2];\r",
+									"\r",
+									"const pair = (a, b) => {\r",
+									"  return { index: a, result: b };\r",
+									"};\r",
+									"const expectedCalculatedRatings = []\r",
+									"for (let i = 0; i < eventsLikeCounter.length; i++) {\r",
+									"    expectedCalculatedRatings[i] = pair(eventsIndexes[i], calc.calculateRating(eventsLikeCounter[i], eventsDislikeCounter[i]));\r",
+									"}\r",
+									"expectedCalculatedRatings.sort(function(a, b){return b.result == a.result ? a.index - b.index : b.result - a.result});\r",
+									"\r",
+									"\r",
+									"\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.be.an(\"array\");\r",
+									"    pm.expect(target.length).equals(pm.collectionVariables.get('size'));\r",
+									"});\r",
+									"\r",
+									"\r",
+									"const actualCalculatedRatings = []\r",
+									"for (let i = 0; i < target.length; i++) {\r",
+									"    actualCalculatedRatings[i] = pair(target[i].id, target[i].calculatedRating);\r",
+									"}\r",
+									"\r",
+									"\r",
+									"pm.test(\"Проверка работы сортировки\", function () {\r",
+									"    pm.expect(calc.isReverseSorted(actualCalculatedRatings)).equals(true, 'События должны быть отсортированы по своему высчитанному рейтингу');\r",
+									"    actualCalculatedRatings.sort(function(a, b){return b.result == a.result ? a.index - b.index : b.result - a.result});\r",
+									"\r",
+									"    pm.expect(actualCalculatedRatings).to.deep.equal(expectedCalculatedRatings, 'Для событий неверно посчитаны рейтинги');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events?categories={{categoryId}}&from={{from}}&size={{size}}&sort=RATING&rangeStart=2000-01-01%2000%3A00%3A00",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events"
+							],
+							"query": [
+								{
+									"key": "categories",
+									"value": "{{categoryId}}"
+								},
+								{
+									"key": "from",
+									"value": "{{from}}"
+								},
+								{
+									"key": "size",
+									"value": "{{size}}"
+								},
+								{
+									"key": "sort",
+									"value": "RATING"
+								},
+								{
+									"key": "rangeStart",
+									"value": "2000-01-01%2000%3A00%3A00"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ok",
+			"item": [
+				{
+					"name": "Добавление лайка",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        pm.collectionVariables.set('temp', user);\r",
+									"\r",
+									"        await api.addRatingToEvent(event.id, user.id, true);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const calc = new CalculateUtils();\r",
+									"const temp = pm.collectionVariables.get('temp');\r",
+									"const ratingExpected = calc.calculateRating(1, 0);\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.have.property('likes');\r",
+									"    pm.expect(target).to.have.property('dislikes');\r",
+									"    pm.expect(target).to.have.property('calculatedRating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.calculatedRating).equal(ratingExpected, 'У события с 1 лайком и 0 дизлайков рейтинг должен быть равен ' + ratingExpected)\r",
+									"    pm.expect(target.likes).to.be.an(\"array\");\r",
+									"    pm.expect(target.likes.length).equals(1, 'У события должен быть 1 лайк');\r",
+									"    pm.expect(target.likes[0].id).equal(temp.id, 'Идентификатор пользователя, поставившего лайк должен быть идентичен идентификатору пользователя, которые ставил лайк');\r",
+									"    pm.expect(target.dislikes).to.be.an(\"array\");\r",
+									"    pm.expect(target.dislikes.length).equal(0, 'У события не должно быть дизлайков');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/:eventId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								":eventId"
+							],
+							"variable": [
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Добавление дизлайка",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        pm.collectionVariables.set('temp', user);\r",
+									"\r",
+									"        await api.addRatingToEvent(event.id, user.id, false);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const calc = new CalculateUtils();\r",
+									"const temp = pm.collectionVariables.get('temp');\r",
+									"const ratingExpected = calc.calculateRating(0, 1);\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.have.property('likes');\r",
+									"    pm.expect(target).to.have.property('dislikes');\r",
+									"    pm.expect(target).to.have.property('calculatedRating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.calculatedRating).equal(ratingExpected, 'У события с 0 лайков и 1 дизлайком рейтинг должен быть равен ' + ratingExpected)\r",
+									"    pm.expect(target.likes).to.be.an(\"array\");\r",
+									"    pm.expect(target.likes.length).equal(0, 'У события не должно быть лайков');\r",
+									"\r",
+									"    pm.expect(target.dislikes).to.be.an(\"array\");\r",
+									"    pm.expect(target.dislikes.length).equals(1, 'У события должен быть 1 дизлайк');\r",
+									"        pm.expect(target.dislikes[0].id).equal(temp.id, 'Идентификатор пользователя, поставившего дизлайк должен быть идентичен идентификатору пользователя, которые ставил дизлайк');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/:eventId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								":eventId"
+							],
+							"variable": [
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Удаление лайка/дизлайка",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user1 = await api.addUser(rnd.getUser());\r",
+									"        const user2 = await api.addUser(rnd.getUser());\r",
+									"\r",
+									"        await api.addRatingToEvent(event.id, user1.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user2.id, false);\r",
+									"        await api.removeRatingToEvent(event.id, user1.id);\r",
+									"        await api.removeRatingToEvent(event.id, user2.id);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.have.property('likes');\r",
+									"    pm.expect(target).to.have.property('dislikes');\r",
+									"    pm.expect(target).to.have.property('calculatedRating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.calculatedRating).equal(0, 'У события без лайков и дизлайков рейтинг должен быть 0')\r",
+									"    pm.expect(target.likes).to.be.an(\"array\");\r",
+									"    pm.expect(target.likes.length).equal(0, 'У события должен удалиться единственный лайк');\r",
+									"    pm.expect(target.dislikes).to.be.an(\"array\");\r",
+									"    pm.expect(target.dislikes.length).equal(0, 'У события должен удалиться единственный дизлайк');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/:eventId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								":eventId"
+							],
+							"variable": [
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Удаление несуществующего рейтинга ничего не меняет",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user1 = await api.addUser(rnd.getUser());\r",
+									"        const user2 = await api.addUser(rnd.getUser());\r",
+									"        const user3 = await api.addUser(rnd.getUser());\r",
+									"\r",
+									"        await api.addRatingToEvent(event.id, user1.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user2.id, true);\r",
+									"        pm.collectionVariables.set('temp', [user1,user2]);\r",
+									"\r",
+									"\r",
+									"        await api.removeRatingToEvent(event.id, user3.id);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const calc = new CalculateUtils();\r",
+									"const temp = pm.collectionVariables.get('temp');\r",
+									"const ratingExpected = calc.calculateRating(2, 0);\r",
+									"\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.have.property('likes');\r",
+									"    pm.expect(target).to.have.property('dislikes');\r",
+									"    pm.expect(target).to.have.property('calculatedRating');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.calculatedRating).equal(ratingExpected, 'У события с 2 лайками и 0 дизлайками рейтинг должен быть равен ' + ratingExpected)\r",
+									"    pm.expect(target.likes).to.be.an(\"array\");\r",
+									"    pm.expect(target.likes.length).equals(2, 'У события должно быть 2 лайка');\r",
+									"    pm.expect(target.likes[0].id).equal(temp[0].id, 'Идентификатор пользователя, поставившего лайк должен быть идентичен идентификатору пользователя, которые ставил лайк');\r",
+									"    pm.expect(target.likes[1].id).equal(temp[1].id, 'Идентификатор пользователя, поставившего лайк должен быть идентичен идентификатору пользователя, которые ставил лайк');\r",
+									"    pm.expect(target.dislikes).to.be.an(\"array\");\r",
+									"    pm.expect(target.dislikes.length).equal(0, 'У события не должно быть дизлайков');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/:eventId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								":eventId"
+							],
+							"variable": [
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Изменение рейтинга с лайка на дизлайк",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        pm.collectionVariables.set('temp', user);\r",
+									"\r",
+									"        await api.addRatingToEvent(event.id, user.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user.id, false);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const calc = new CalculateUtils();\r",
+									"const temp = pm.collectionVariables.get('temp');\r",
+									"const ratingExpected = calc.calculateRating(0, 1);\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.have.property('likes');\r",
+									"    pm.expect(target).to.have.property('dislikes');\r",
+									"    pm.expect(target).to.have.property('calculatedRating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.calculatedRating).equal(ratingExpected, 'У события с 0 лайков и 1 дизлайком рейтинг должен быть равен ' + ratingExpected)\r",
+									"    pm.expect(target.likes).to.be.an(\"array\");\r",
+									"    pm.expect(target.likes.length).equal(0, 'У события не должно быть лайков');\r",
+									"\r",
+									"    pm.expect(target.dislikes).to.be.an(\"array\");\r",
+									"    pm.expect(target.dislikes.length).equals(1, 'У события должен быть 1 дизлайк');\r",
+									"        pm.expect(target.dislikes[0].id).equal(temp.id, 'Идентификатор пользователя, поставившего дизлайк должен быть идентичен идентификатору пользователя, которые ставил дизлайк');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/:eventId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								":eventId"
+							],
+							"variable": [
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Повторное добавление лайка от того же пользователя ничего не меняет",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user = await api.addUser(rnd.getUser());\r",
+									"        pm.collectionVariables.set('temp', user);\r",
+									"\r",
+									"        await api.addRatingToEvent(event.id, user.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user.id, true);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const calc = new CalculateUtils();\r",
+									"const temp = pm.collectionVariables.get('temp');\r",
+									"const ratingExpected = calc.calculateRating(1, 0);\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.have.property('likes');\r",
+									"    pm.expect(target).to.have.property('dislikes');\r",
+									"    pm.expect(target).to.have.property('calculatedRating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.calculatedRating).equal(ratingExpected, 'У события с 1 лайком и 0 дизлайков рейтинг должен быть равен ' + ratingExpected)\r",
+									"    pm.expect(target.likes).to.be.an(\"array\");\r",
+									"    pm.expect(target.likes.length).equals(1, 'У события должен быть 1 лайк');\r",
+									"    pm.expect(target.likes[0].id).equal(temp.id, 'Идентификатор пользователя, поставившего лайк должен быть идентичен идентификатору пользователя, которые ставил лайк');\r",
+									"    pm.expect(target.dislikes).to.be.an(\"array\");\r",
+									"    pm.expect(target.dislikes.length).equal(0, 'У события не должно быть дизлайков');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/:eventId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								":eventId"
+							],
+							"variable": [
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Несколько лайков/дизлайков от разных пользователей на одно событие",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {\r",
+									"    const api = new API(pm);\r",
+									"    const rnd = new RandomUtils();\r",
+									"\r",
+									"    try {\r",
+									"        const initiator = await api.addUser(rnd.getUser());\r",
+									"        const category = await api.addCategory(rnd.getCategory());\r",
+									"        let event = await api.addEvent(initiator.id, rnd.getEvent(category.id));\r",
+									"        event = await api.publishEvent(event.id);\r",
+									"        pm.collectionVariables.set('eventId', event.id);\r",
+									"\r",
+									"        const user1 = await api.addUser(rnd.getUser());\r",
+									"        const user2 = await api.addUser(rnd.getUser());\r",
+									"        const user3 = await api.addUser(rnd.getUser());\r",
+									"        const user4 = await api.addUser(rnd.getUser());\r",
+									"        const user5 = await api.addUser(rnd.getUser());\r",
+									"        const user6 = await api.addUser(rnd.getUser());\r",
+									"        const user7 = await api.addUser(rnd.getUser());\r",
+									"        const user8 = await api.addUser(rnd.getUser());\r",
+									"        const user9 = await api.addUser(rnd.getUser());\r",
+									"        const user10 = await api.addUser(rnd.getUser());\r",
+									"        const user11 = await api.addUser(rnd.getUser());\r",
+									"        const user12 = await api.addUser(rnd.getUser());\r",
+									"        const user13 = await api.addUser(rnd.getUser());\r",
+									"        const user14 = await api.addUser(rnd.getUser());\r",
+									"\r",
+									"        await api.addRatingToEvent(event.id, user1.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user2.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user3.id, false);\r",
+									"        await api.addRatingToEvent(event.id, user4.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user5.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user6.id, false);\r",
+									"        await api.addRatingToEvent(event.id, user1.id, false);\r",
+									"        await api.addRatingToEvent(event.id, user6.id, false);\r",
+									"        await api.addRatingToEvent(event.id, user7.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user8.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user9.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user10.id, false);\r",
+									"        await api.addRatingToEvent(event.id, user11.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user12.id, true);\r",
+									"        await api.addRatingToEvent(event.id, user13.id, false);\r",
+									"        await api.addRatingToEvent(event.id, user14.id, true);\r",
+									"    } catch(err) {\r",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
+									"    }\r",
+									"};\r",
+									"\r",
+									"const interval = setInterval(() => {}, 1000);\r",
+									"\r",
+									"setTimeout(async () => \r",
+									"    {\r",
+									"        try {\r",
+									"            await main();\r",
+									"        } catch (e) {\r",
+									"            console.error(e);\r",
+									"        } finally {\r",
+									"            clearInterval(interval);\r",
+									"        }\r",
+									"    },  \r",
+									"    100 \r",
+									");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const calc = new CalculateUtils();\r",
+									"const temp = pm.collectionVariables.get('temp');\r",
+									"const ratingExpected = calc.calculateRating(9, 5);\r",
+									"\r",
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
+									"    pm.response.to.be.ok;    \r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									"const target = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
+									"    pm.expect(target).to.have.property('likes');\r",
+									"    pm.expect(target).to.have.property('dislikes');\r",
+									"    pm.expect(target).to.have.property('calculatedRating');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    pm.expect(target.id).to.not.be.null;\r",
+									"    pm.expect(target.calculatedRating).equal(ratingExpected, 'У события с 9 лайками и 5 дизлайками рейтинг должен быть равен ' + ratingExpected)\r",
+									"    pm.expect(target.likes).to.be.an(\"array\");\r",
+									"    pm.expect(target.likes.length).equals(9, 'У события должно быть 9 лайков');\r",
+									"    pm.expect(target.dislikes).to.be.an(\"array\");\r",
+									"    pm.expect(target.dislikes.length).equal(5, 'У события должно быть 5 дизлайков');\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events/:eventId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events",
+								":eventId"
+							],
+							"variable": [
+								{
+									"key": "eventId",
+									"value": "{{eventId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"API = class {",
+					"    constructor(postman, verbose = false, baseUrl = \"http://localhost:8080\") {",
+					"        this.baseUrl = baseUrl;",
+					"        this.pm = postman;",
+					"        this._verbose = verbose;",
+					"    }",
+					"",
+					"    async addUser(user, verbose=null) {",
+					"        return this.post(\"/admin/users\", user, \"Ошибка при добавлении нового пользователя: \", verbose);",
+					"    }",
+					"",
+					"    async addCategory(category, verbose=null) {",
+					"        return this.post(\"/admin/categories\", category, \"Ошибка при добавлении новой категории: \", verbose);",
+					"    }",
+					"",
+					"    async addEvent(userId, event, verbose=null) {",
+					"        return this.post(\"/users/\" + userId + \"/events\", event, \"Ошибка при добавлении нового события: \", verbose);",
+					"    }",
+					"",
+					"    async addCompilation(compilation, verbose=null) {",
+					"        return this.post(\"/admin/compilations\", compilation, \"Ошибка при добавлении новой подборки: \", verbose);",
+					"    }",
+					"",
+					"    async publishParticipationRequest(eventId, userId, verbose=null) {",
+					"        return this.post('/users/' + userId + '/requests?eventId=' + eventId, null, \"Ошибка при добавлении нового запроса на участие в событии\", verbose);",
+					"    }",
+					"",
+					"    async publishEvent(eventId, verbose=null) {",
+					"        return this.patch('/admin/events/' + eventId, {stateAction: \"PUBLISH_EVENT\"}, \"Ошибка при публикации события\", verbose);",
+					"    }",
+					"    ",
+					"    async rejectEvent(eventId, verbose=null) {",
+					"        return this.patch('/admin/events/' + eventId, {stateAction: \"REJECT_EVENT\"}, \"Ошибка при отмене события\", verbose);",
+					"    }",
+					"",
+					"    async acceptParticipationRequest(eventId, userId, reqId, verbose=null) {",
+					"        return this.patch('/users/' + userId + '/events/' + eventId + '/requests/', {requestIds:[reqId], status: \"CONFIRMED\"}, \"Ошибка при принятии заявки на участие в событии\", verbose);",
+					"    }",
+					"",
+					"    async addRatingToEvent(eventId, userId, isLike, verbose=null) {",
+					"        return this.post('/users/' + userId + '/events/' + eventId + '/ratings' + '?isLike=' + isLike, null, \"Ошибка при попытке поставить лайк или дизлайк событию\", verbose);",
+					"    }",
+					"",
+					"    async removeRatingToEvent(eventId, userId, verbose=null) {",
+					"        return this.post('/users/' + userId + '/events/' + eventId + '/ratings', null, \"Ошибка при попытке удалить лайк или дизлайк у события\", verbose);",
+					"    }",
+					"",
+					"    async findCategory(catId, verbose=null) {",
+					"        return this.get('/categories/' + catId, null, \"Ошибка при поиске категории по id\", verbose);",
+					"    }",
+					"",
+					"    async findCompilation(compId, verbose=null) {",
+					"        return this.get('/compilations/' + compId, null, \"Ошибка при поиске подборки по id\", verbose);",
+					"    }",
+					"",
+					"    async findEvent(eventId, verbose=null) {",
+					"        return this.get('/events/' + eventId, null, \"Ошибка при поиске события по id\", verbose);",
+					"    }",
+					"",
+					"    async findUser(userId, verbose=null) {",
+					"        return this.get('/admin/users?ids=' + userId, null, \"Ошибка при поиске пользователя по id\", verbose);",
+					"    }",
+					"",
+					"    async post(path, body, errorText = \"Ошибка при выполнении post-запроса: \", verbose=null) {",
+					"        return this.sendRequest(\"POST\", path, body, errorText, verbose);",
+					"    }",
+					"",
+					"    async patch(path, body = null, errorText = \"Ошибка при выполнении patch-запроса: \", verbose=null) {",
+					"        return this.sendRequest(\"PATCH\", path, body, errorText, verbose);",
+					"    }",
+					"",
+					"    async get(path, body = null, errorText = \"Ошибка при выполнении get-запроса: \", verbose=null) {",
+					"        return this.sendRequest(\"GET\", path, body, errorText, verbose);",
+					"    }",
+					"",
+					"    async sendRequest(method, path, body=null, errorText = \"Ошибка при выполнении запроса: \", verbose=null) {",
+					"        return new Promise((resolve, reject) => {",
+					"            verbose = verbose == null ? this._verbose : verbose;",
+					"",
+					"            const request = {",
+					"                url: this.baseUrl + path,",
+					"                method: method,",
+					"                body: body == null ? \"\" : JSON.stringify(body),",
+					"                header: { \"Content-Type\": \"application/json\" },",
+					"            };",
+					"",
+					"            if(verbose) {",
+					"                console.log(\"Отправляю запрос: \", request);",
+					"            }",
+					"",
+					"            try {",
+					"                this.pm.sendRequest(request, (error, response) => {",
+					"                    if(error || (response.code >= 400 && response.code <= 599)) {",
+					"                        let err = error ? error : JSON.stringify(response.json());",
+					"                        console.error(\"При выполнении запроса к серверу возникла ошика.\\n\", err,",
+					"                             \"\\nДля отладки проблемы повторите такой же запрос к вашей программе \" + ",
+					"                             \"на локальном компьютере. Данные запроса:\\n\", JSON.stringify(request));",
+					"",
+					"                        reject(new Error(errorText + err));",
+					"                    }",
+					"",
+					"                    if(verbose) {",
+					"                        console.log(\"Результат обработки запроса: код состояния - \", response.code, \", тело: \", response.json());",
+					"                    }",
+					"",
+					"                    resolve(response.json());",
+					"                });",
+					"            } catch(err) {",
+					"                if(verbose) {",
+					"                    console.error(errorText, err);",
+					"                }",
+					"                return Promise.reject(err);",
+					"            }",
+					"        });",
+					"    }",
+					"};",
+					"",
+					"RandomUtils = class {",
+					"    constructor() {}",
+					"",
+					"    getUser() {",
+					"        return {",
+					"            name: pm.variables.replaceIn('{{$randomFullName}}'),",
+					"            email: pm.variables.replaceIn('{{$randomEmail}}')",
+					"        };",
+					"    }",
+					"",
+					"    getCategory() {",
+					"        return {",
+					"            name: pm.variables.replaceIn('{{$randomWord}}') + Math.floor(Math.random() * 100).toString()",
+					"        };",
+					"    }",
+					"",
+					"    getEvent(categoryId) {",
+					"        return {",
+					"            annotation: pm.variables.replaceIn('{{$randomLoremParagraph}}'),",
+					"            category: categoryId,",
+					"            description: pm.variables.replaceIn('{{$randomLoremParagraphs}}'),",
+					"            eventDate: this.getFutureDateTime(),",
+					"            location: {",
+					"                lat: parseFloat(pm.variables.replaceIn('{{$randomLatitude}}')),",
+					"                lon: parseFloat(pm.variables.replaceIn('{{$randomLongitude}}')),",
+					"            },",
+					"            paid: pm.variables.replaceIn('{{$randomBoolean}}'),",
+					"            participantLimit: pm.variables.replaceIn('{{$randomInt}}'),",
+					"            requestModeration: pm.variables.replaceIn('{{$randomBoolean}}'),",
+					"            title: pm.variables.replaceIn('{{$randomLoremSentence}}'),",
+					"        }",
+					"    }",
+					"",
+					"    getCompilation(...eventIds) {",
+					"        return {",
+					"            title: pm.variables.replaceIn('{{$randomLoremSentence}}').slice(0, 50),",
+					"            pinned: pm.variables.replaceIn('{{$randomBoolean}}'),",
+					"            events: eventIds",
+					"        };",
+					"    }",
+					"",
+					"",
+					"    getFutureDateTime(hourShift = 5, minuteShift=0, yearShift=0) {",
+					"        let moment = require('moment');",
+					"",
+					"        let m = moment();",
+					"        m.add(hourShift, 'hour');",
+					"        m.add(minuteShift, 'minute');",
+					"        m.add(yearShift, 'year');",
+					"",
+					"        return m.format('YYYY-MM-DD HH:mm:ss');",
+					"    }",
+					"",
+					"    getWord(length = 1) {",
+					"        let result = '';",
+					"        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';",
+					"        const charactersLength = characters.length;",
+					"        let counter = 0;",
+					"        while (counter < length) {",
+					"            result += characters.charAt(Math.floor(Math.random() * charactersLength));",
+					"            counter += 1;",
+					"        }",
+					"        return result;",
+					"    }",
+					"}",
+					"",
+					"CalculateUtils = class {",
+					"    constructor() {}",
+					"",
+					"    calculateRating(likeCount, dislikeCount) {",
+					"        const totalCount = likeCount + dislikeCount",
+					"        return totalCount == 0 ? 0 : Math.round(100 * Math.log1p(totalCount) * (likeCount - dislikeCount) / totalCount);",
+					"    }",
+					"",
+					"    isReverseSorted(array) {",
+					"        for (let i = 0; i < array.length - 1; i++) {",
+					"            if (array[i].result < array[i + 1].result) {",
+					"                return false;",
+					"            }",
+					"        }",
+					"        return true;",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "eventId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "categoryId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "temp",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "initiatorId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "from",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "size",
+			"value": "10",
+			"type": "string"
+		}
+	]
+}
