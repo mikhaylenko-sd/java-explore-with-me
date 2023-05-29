@@ -54,7 +54,6 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const api = new API();\r",
 									"const calc = new CalculateUtils();\r",
 									"\r",
 									"pm.test(\"Ответ должен содержать код статуса 404 и данные в формате json\", function () {\r",
@@ -229,7 +228,8 @@
 									"        pm.collectionVariables.set('eventId', event.id);\r",
 									"\r",
 									"        const user = await api.addUser(rnd.getUser());\r",
-									"        pm.collectionVariables.set('userId', initiator.id);\r",
+									"        pm.collectionVariables.set('userId', user.id);\r",
+									"        pm.collectionVariables.set('initiatorId', initiator.id);\r",
 									"    } catch(err) {\r",
 									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r",
 									"    }\r",
@@ -257,7 +257,6 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const api = new API();\r",
 									"const calc = new CalculateUtils();\r",
 									"\r",
 									"pm.test(\"Ответ должен содержать код статуса 409 и данные в формате json\", function () {\r",
@@ -267,7 +266,7 @@
 									"});\r",
 									"\r",
 									"pm.sendRequest({\r",
-									"            url: pm.collectionVariables.get(\"baseUrl\") + \"/admin/events?users=\" + pm.collectionVariables.get(\"userId\"),\r",
+									"            url: pm.collectionVariables.get(\"baseUrl\") + \"/admin/events?users=\" + pm.collectionVariables.get(\"initiatorId\"),\r",
 									"            method: 'GET',\r",
 									"        }, (error, response) => {\r",
 									"            const events = response.json();\r",
