@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "50e71f1e-0549-4670-81f7-4c392275d0af",
-		"name": "Test Explore With Me - рейтинги событий",
+		"_postman_id": "fb0f1fff-0e25-479c-a2a6-c40a298f5264",
+		"name": "Test Explore With Me - рейтинги событий Copy",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "27668482"
+		"_exporter_id": "27689207"
 	},
 	"item": [
 		{
@@ -347,9 +347,9 @@
 									"        const category = await api.addCategory(rnd.getCategory());\r",
 									"\r",
 									"        pm.collectionVariables.set('categoryId', category.id);\r",
-									"        pm.collectionVariables.set('from', 0);\r",
+									"        pm.collectionVariables.set('from', JSON.stringify(0));\r",
 									"        const eventCount = 10;\r",
-									"        pm.collectionVariables.set('size', eventCount);\r",
+									"        pm.collectionVariables.set('size', JSON.stringify(eventCount));\r",
 									"\r",
 									"\r",
 									"        const userCount = 5;\r",
@@ -380,7 +380,7 @@
 									"                }\r",
 									"            }\r",
 									"        }\r",
-									"        pm.collectionVariables.set('temp', [eventIndexes, eventsLikeCounter, eventsDislikeCounter]);\r",
+									"        pm.collectionVariables.set('temp', JSON.stringify([eventIndexes, eventsLikeCounter, eventsDislikeCounter]));\r",
 									"\r",
 									"\r",
 									"    } catch(err) {\r",
@@ -411,7 +411,7 @@
 							"script": {
 								"exec": [
 									"const calc = new CalculateUtils();\r",
-									"const temp = pm.collectionVariables.get('temp');\r",
+									"const temp = JSON.parse(pm.collectionVariables.get('temp'));\r",
 									"const eventsIndexes = temp[0];\r",
 									"const eventsLikeCounter = temp[1];\r",
 									"const eventsDislikeCounter = temp[2];\r",
@@ -439,7 +439,7 @@
 									"\r",
 									"pm.test(\"Событие должно содержать поля: likes, dislikes, calculatedRating\", function () {\r",
 									"    pm.expect(target).to.be.an(\"array\");\r",
-									"    pm.expect(target.length).equals(pm.collectionVariables.get('size'));\r",
+									"    pm.expect(target.length).equals(JSON.parse(pm.collectionVariables.get('size')));\r",
 									"});\r",
 									"\r",
 									"\r",
@@ -521,7 +521,8 @@
 									"        pm.collectionVariables.set('eventId', event.id);\r",
 									"\r",
 									"        const user = await api.addUser(rnd.getUser());\r",
-									"        pm.collectionVariables.set('temp', user);\r",
+									"        pm.collectionVariables.set('temp', JSON.stringify(user));\r",
+									"        console.log(user.id);\r",
 									"\r",
 									"        await api.addRatingToEvent(event.id, user.id, true);\r",
 									"    } catch(err) {\r",
@@ -552,7 +553,6 @@
 							"script": {
 								"exec": [
 									"const calc = new CalculateUtils();\r",
-									"const temp = pm.collectionVariables.get('temp');\r",
 									"const ratingExpected = calc.calculateRating(1, 0);\r",
 									"\r",
 									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
@@ -569,7 +569,10 @@
 									"    pm.expect(target).to.have.property('calculatedRating');\r",
 									"});\r",
 									"\r",
+									"\r",
 									"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {\r",
+									"    const temp = JSON.parse(pm.collectionVariables.get('temp'));\r",
+									"\r",
 									"    pm.expect(target.id).to.not.be.null;\r",
 									"    pm.expect(target.calculatedRating).equal(ratingExpected, 'У события с 1 лайком и 0 дизлайков рейтинг должен быть равен ' + ratingExpected)\r",
 									"    pm.expect(target.likes).to.be.an(\"array\");\r",
@@ -624,7 +627,7 @@
 									"        pm.collectionVariables.set('eventId', event.id);\r",
 									"\r",
 									"        const user = await api.addUser(rnd.getUser());\r",
-									"        pm.collectionVariables.set('temp', user);\r",
+									"        pm.collectionVariables.set('temp', JSON.stringify(user));\r",
 									"\r",
 									"        await api.addRatingToEvent(event.id, user.id, false);\r",
 									"    } catch(err) {\r",
@@ -655,7 +658,7 @@
 							"script": {
 								"exec": [
 									"const calc = new CalculateUtils();\r",
-									"const temp = pm.collectionVariables.get('temp');\r",
+									"const temp = JSON.parse(pm.collectionVariables.get('temp'));\r",
 									"const ratingExpected = calc.calculateRating(0, 1);\r",
 									"\r",
 									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
@@ -834,7 +837,7 @@
 									"\r",
 									"        await api.addRatingToEvent(event.id, user1.id, true);\r",
 									"        await api.addRatingToEvent(event.id, user2.id, true);\r",
-									"        pm.collectionVariables.set('temp', [user1,user2]);\r",
+									"        pm.collectionVariables.set('temp', JSON.stringify([user1,user2]));\r",
 									"\r",
 									"\r",
 									"        await api.removeRatingToEvent(event.id, user3.id);\r",
@@ -866,7 +869,7 @@
 							"script": {
 								"exec": [
 									"const calc = new CalculateUtils();\r",
-									"const temp = pm.collectionVariables.get('temp');\r",
+									"const temp = JSON.parse(pm.collectionVariables.get('temp'));\r",
 									"const ratingExpected = calc.calculateRating(2, 0);\r",
 									"\r",
 									"\r",
@@ -941,7 +944,7 @@
 									"        pm.collectionVariables.set('eventId', event.id);\r",
 									"\r",
 									"        const user = await api.addUser(rnd.getUser());\r",
-									"        pm.collectionVariables.set('temp', user);\r",
+									"        pm.collectionVariables.set('temp', JSON.stringify(user));\r",
 									"\r",
 									"        await api.addRatingToEvent(event.id, user.id, true);\r",
 									"        await api.addRatingToEvent(event.id, user.id, false);\r",
@@ -973,7 +976,7 @@
 							"script": {
 								"exec": [
 									"const calc = new CalculateUtils();\r",
-									"const temp = pm.collectionVariables.get('temp');\r",
+									"const temp = JSON.parse(pm.collectionVariables.get('temp'));\r",
 									"const ratingExpected = calc.calculateRating(0, 1);\r",
 									"\r",
 									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
@@ -1046,7 +1049,7 @@
 									"        pm.collectionVariables.set('eventId', event.id);\r",
 									"\r",
 									"        const user = await api.addUser(rnd.getUser());\r",
-									"        pm.collectionVariables.set('temp', user);\r",
+									"        pm.collectionVariables.set('temp', JSON.stringify(user));\r",
 									"\r",
 									"        await api.addRatingToEvent(event.id, user.id, true);\r",
 									"        await api.addRatingToEvent(event.id, user.id, true);\r",
@@ -1078,7 +1081,7 @@
 							"script": {
 								"exec": [
 									"const calc = new CalculateUtils();\r",
-									"const temp = pm.collectionVariables.get('temp');\r",
+									"const temp = JSON.parse(pm.collectionVariables.get('temp'));\r",
 									"const ratingExpected = calc.calculateRating(1, 0);\r",
 									"\r",
 									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {\r",
@@ -1505,7 +1508,7 @@
 		},
 		{
 			"key": "temp",
-			"value": "",
+			"value": "[object Object]",
 			"type": "string"
 		},
 		{
