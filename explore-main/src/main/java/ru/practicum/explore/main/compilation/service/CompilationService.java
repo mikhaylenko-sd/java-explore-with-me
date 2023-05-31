@@ -38,7 +38,6 @@ public class CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventMapper eventMapper;
     private final RatingService ratingService;
-     DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final StatsClient statsClient;
 
     public void deleteCompilationById(Long compId) {
@@ -117,6 +116,7 @@ public class CompilationService {
     }
 
     private EventShortDto preparingFullDtoWithStat(EventFullDto eventFullDto) {
+        DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<ViewStatsDto> stat = statsClient.getStats(eventFullDto.getCreatedOn().format(returnedTimeFormat),
                 LocalDateTime.now().format(returnedTimeFormat),
                 List.of("/events/" + eventFullDto.getId()), false);
