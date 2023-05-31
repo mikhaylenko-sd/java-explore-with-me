@@ -8,7 +8,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore.main.category.model.Category;
 import ru.practicum.explore.main.category.repository.CategoryRepository;
-import ru.practicum.explore.main.event.controller.EventPublicController;
 import ru.practicum.explore.main.event.dto.EventFullDto;
 import ru.practicum.explore.main.event.dto.EventShortDto;
 import ru.practicum.explore.main.event.dto.NewEventDto;
@@ -16,6 +15,7 @@ import ru.practicum.explore.main.event.dto.UpdateEventAdminRequest;
 import ru.practicum.explore.main.event.dto.UpdateEventUserRequest;
 import ru.practicum.explore.main.event.mapper.EventMapper;
 import ru.practicum.explore.main.event.model.Event;
+import ru.practicum.explore.main.event.model.FilterSort;
 import ru.practicum.explore.main.event.repository.EventCriteriaRepository;
 import ru.practicum.explore.main.event.repository.EventRepository;
 import ru.practicum.explore.main.exceptions.BaseException;
@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static ru.practicum.explore.main.event.controller.EventPublicController.FilterSort.RATING;
-import static ru.practicum.explore.main.event.controller.EventPublicController.FilterSort.VIEWS;
+import static ru.practicum.explore.main.event.model.FilterSort.RATING;
+import static ru.practicum.explore.main.event.model.FilterSort.VIEWS;
 
 @Slf4j
 @Service
@@ -48,11 +48,8 @@ public class EventService {
     private final CategoryRepository categoryRepository;
     private final RequestRepository requestRepository;
     private final EventMapper eventMapper;
-
     private final RatingService ratingService;
-
     private final DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     private final StatsClient statsClient;
 
     @Autowired
@@ -158,14 +155,14 @@ public class EventService {
     }
 
     public List<EventFullDto> getEvents(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
-                                        LocalDateTime rangeEnd, Boolean onlyAvailable, EventPublicController.FilterSort sort,
+                                        LocalDateTime rangeEnd, Boolean onlyAvailable, FilterSort sort,
                                         Integer from, Integer size, HttpServletRequest request) {
         log.info("Получение информации о событиях с фильтрами public");
         statsClient.saveHit("explore-main", request.getRequestURI(), request.getRemoteAddr());
         Sort customSort = Sort.by(Sort.Direction.ASC, "eventDate");
-        if (VIEWS.equals(sort)) {
+        if (VIEWS == sort) {
             customSort = Sort.by(Sort.Direction.DESC, "views");
-        } else if (RATING.equals(sort)) {
+        } else if (RATING == sort) {
             customSort = Sort.by(Sort.Direction.DESC, "calculatedRating");
         }
         Pageable pageable = PageRequest.of(from / size, size, customSort);

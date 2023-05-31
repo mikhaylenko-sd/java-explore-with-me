@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.explore.main.event.dto.EventFullDto;
+import ru.practicum.explore.main.event.model.FilterSort;
 import ru.practicum.explore.main.event.service.EventService;
 import ru.practicum.explore.main.exceptions.RequestValidationException;
 
@@ -54,9 +55,5 @@ public class EventPublicController {
     public ResponseEntity<EventFullDto> getEventById(@PathVariable Long id, HttpServletRequest request) {
         log.info("Получение подробной информации об опубликованном событии по его id={}, uri={}", id, request.getRequestURI());
         return new ResponseEntity<>(eventService.getEventById(id, request), HttpStatus.OK);
-    }
-
-    public enum FilterSort {
-        EVENT_DATE, VIEWS, RATING
     }
 }

@@ -1,5 +1,6 @@
 package ru.practicum.explore.main.compilation.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,30 +31,15 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class CompilationService {
     private final EventRepository eventRepository;
     private final RequestRepository requestRepository;
     private final CompilationRepository compilationRepository;
-
     private final EventMapper eventMapper;
-
     private final RatingService ratingService;
-    DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+     DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final StatsClient statsClient;
-
-    public CompilationService(EventRepository eventRepository,
-                              RequestRepository requestRepository,
-                              CompilationRepository compilationRepository,
-                              EventMapper eventMapper,
-                              RatingService ratingService,
-                              StatsClient statsClient) {
-        this.eventRepository = eventRepository;
-        this.requestRepository = requestRepository;
-        this.compilationRepository = compilationRepository;
-        this.eventMapper = eventMapper;
-        this.ratingService = ratingService;
-        this.statsClient = statsClient;
-    }
 
     public void deleteCompilationById(Long compId) {
         log.info("Удаление подборки id={}", compId);
