@@ -1,5 +1,6 @@
 package ru.practicum.explore.main.compilation.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +18,7 @@ import ru.practicum.explore.main.event.model.Event;
 import ru.practicum.explore.main.event.repository.EventRepository;
 import ru.practicum.explore.main.exceptions.NotFoundException;
 import ru.practicum.explore.main.exceptions.RequestValidationException;
+import ru.practicum.explore.main.rating.service.RatingService;
 import ru.practicum.explore.main.request.model.Request;
 import ru.practicum.explore.main.request.repository.RequestRepository;
 import ru.practicum.explore.stats.client.StatsClient;
@@ -29,25 +31,14 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class CompilationService {
     private final EventRepository eventRepository;
     private final RequestRepository requestRepository;
     private final CompilationRepository compilationRepository;
-
     private final EventMapper eventMapper;
-    DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final RatingService ratingService;
     private final StatsClient statsClient;
-
-    public CompilationService(EventRepository eventRepository,
-                              RequestRepository requestRepository,
-                              CompilationRepository compilationRepository,
-                              EventMapper eventMapper, StatsClient statsClient) {
-        this.eventRepository = eventRepository;
-        this.requestRepository = requestRepository;
-        this.compilationRepository = compilationRepository;
-        this.eventMapper = eventMapper;
-        this.statsClient = statsClient;
-    }
 
     public void deleteCompilationById(Long compId) {
         log.info("Удаление подборки id={}", compId);
@@ -83,8 +74,8 @@ public class CompilationService {
 
     private Compilation getCompilationById(Long compId) {
         log.info("Поиск подборки в БД по id={}", compId);
-        return compilationRepository.findById(compId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.COMPILATION, compId)
-        );
+        return compilationRepository.findById(compId)
+                .orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.COMPILATION, compId));
     }
 
     public List<CompilationDto> getAllCompilations(Boolean pinned, Integer from, Integer size) {
@@ -121,11 +112,11 @@ public class CompilationService {
                 .map(eventMapper::toEventFullDto)
                 .map(this::preparingFullDtoWithStat)
                 .collect(Collectors.toList());
-        return new CompilationDto(eventShortDtos, compilation.getId(),
-                compilation.isPinned(), compilation.getTitle());
+        return new CompilationDto(eventShortDtos, compilation.getId(), compilation.isPinned(), compilation.getTitle());
     }
 
     private EventShortDto preparingFullDtoWithStat(EventFullDto eventFullDto) {
+        DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<ViewStatsDto> stat = statsClient.getStats(eventFullDto.getCreatedOn().format(returnedTimeFormat),
                 LocalDateTime.now().format(returnedTimeFormat),
                 List.of("/events/" + eventFullDto.getId()), false);
@@ -135,6 +126,7 @@ public class CompilationService {
         List<Request> confirmedRequests = requestRepository.findAllByStatusAndEventId(Request.RequestStatus.CONFIRMED,
                 eventFullDto.getId());
         eventFullDto.setConfirmedRequests(confirmedRequests.size());
+        eventMapper.toEventFullDto(ratingService.getEventRatings(eventFullDto.getId()), eventFullDto);
         return eventMapper.toEventShortDto(eventFullDto);
     }
 }

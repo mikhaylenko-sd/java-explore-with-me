@@ -5,9 +5,11 @@ import lombok.Data;
 import ru.practicum.explore.main.category.model.Category;
 import ru.practicum.explore.main.event.model.Event;
 import ru.practicum.explore.main.event.model.Location;
+import ru.practicum.explore.main.user.dto.UserDto;
 import ru.practicum.explore.main.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class EventFullDto {
@@ -39,4 +41,9 @@ public class EventFullDto {
 
     private String title;
     private Long views;
+    private Long calculatedRating;
+
+    private List<UserDto> likes;
+
+    private List<UserDto> dislikes;
 }

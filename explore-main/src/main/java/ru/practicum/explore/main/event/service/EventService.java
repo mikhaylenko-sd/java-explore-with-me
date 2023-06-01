@@ -8,7 +8,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore.main.category.model.Category;
 import ru.practicum.explore.main.category.repository.CategoryRepository;
-import ru.practicum.explore.main.event.controller.EventPublicController;
 import ru.practicum.explore.main.event.dto.EventFullDto;
 import ru.practicum.explore.main.event.dto.EventShortDto;
 import ru.practicum.explore.main.event.dto.NewEventDto;
@@ -16,10 +15,13 @@ import ru.practicum.explore.main.event.dto.UpdateEventAdminRequest;
 import ru.practicum.explore.main.event.dto.UpdateEventUserRequest;
 import ru.practicum.explore.main.event.mapper.EventMapper;
 import ru.practicum.explore.main.event.model.Event;
+import ru.practicum.explore.main.event.model.FilterSort;
 import ru.practicum.explore.main.event.repository.EventCriteriaRepository;
 import ru.practicum.explore.main.event.repository.EventRepository;
 import ru.practicum.explore.main.exceptions.BaseException;
 import ru.practicum.explore.main.exceptions.NotFoundException;
+import ru.practicum.explore.main.rating.dto.EventRatingsDto;
+import ru.practicum.explore.main.rating.service.RatingService;
 import ru.practicum.explore.main.request.model.Request;
 import ru.practicum.explore.main.request.repository.RequestRepository;
 import ru.practicum.explore.main.user.model.User;
@@ -34,6 +36,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static ru.practicum.explore.main.event.model.FilterSort.RATING;
+import static ru.practicum.explore.main.event.model.FilterSort.VIEWS;
+
 @Slf4j
 @Service
 public class EventService {
@@ -43,9 +48,8 @@ public class EventService {
     private final CategoryRepository categoryRepository;
     private final RequestRepository requestRepository;
     private final EventMapper eventMapper;
-
+    private final RatingService ratingService;
     private final DateTimeFormatter returnedTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     private final StatsClient statsClient;
 
     @Autowired
@@ -55,6 +59,7 @@ public class EventService {
                         CategoryRepository categoryRepository,
                         RequestRepository requestRepository,
                         EventMapper eventMapper,
+                        RatingService ratingService,
                         StatsClient statsClient) {
         this.eventRepository = eventRepository;
         this.eventCriteriaRepository = eventCriteriaRepository;
@@ -62,6 +67,7 @@ public class EventService {
         this.categoryRepository = categoryRepository;
         this.requestRepository = requestRepository;
         this.eventMapper = eventMapper;
+        this.ratingService = ratingService;
         this.statsClient = statsClient;
     }
 
@@ -78,14 +84,16 @@ public class EventService {
         Pageable pageable = PageRequest.of(from / size, size);
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
         return eventRepository.findAllByInitiatorId(userId, pageable).stream()
-                .map(eventMapper::toEventShortDto).collect(Collectors.toList());
+                .map(eventMapper::toEventShortDto)
+                .map(eventShortDto -> eventMapper.toEventShortDto(ratingService.getEventRatings(eventShortDto.getId()), eventShortDto))
+                .collect(Collectors.toList());
     }
 
     public EventFullDto getEventsByUserAndEventId(Long userId, Long eventId) {
         log.info("Получение информации о событии пользователем");
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.USER, userId));
         Event stored = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException(NotFoundException.NotFoundType.EVENT, eventId));
-        return eventMapper.toEventFullDto(stored);
+        return eventMapper.toEventFullDto(ratingService.getEventRatings(stored.getId()), eventMapper.toEventFullDto(stored));
     }
 
     public EventFullDto updateEventsByUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
@@ -147,14 +155,17 @@ public class EventService {
     }
 
     public List<EventFullDto> getEvents(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
-                                        LocalDateTime rangeEnd, Boolean onlyAvailable, EventPublicController.FilterSort sort,
+                                        LocalDateTime rangeEnd, Boolean onlyAvailable, FilterSort sort,
                                         Integer from, Integer size, HttpServletRequest request) {
         log.info("Получение информации о событиях с фильтрами public");
         statsClient.saveHit("explore-main", request.getRequestURI(), request.getRemoteAddr());
-        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "eventDate"));
-        if (sort.equals(EventPublicController.FilterSort.VIEWS)) {
-            pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "views"));
+        Sort customSort = Sort.by(Sort.Direction.ASC, "eventDate");
+        if (VIEWS == sort) {
+            customSort = Sort.by(Sort.Direction.DESC, "views");
+        } else if (RATING == sort) {
+            customSort = Sort.by(Sort.Direction.DESC, "calculatedRating");
         }
+        Pageable pageable = PageRequest.of(from / size, size, customSort);
         log.info("Получение информации о событиях с фильтрами public из репозиория");
         return eventCriteriaRepository.findAllByTextAndCategoryIdInAndPaidAndEventDateBetweenAndAvailable(
                         text, categories, paid, rangeStart, rangeEnd, onlyAvailable, pageable
@@ -220,12 +231,14 @@ public class EventService {
         List<Request> confirmedRequests = requestRepository.findAllByStatusAndEventId(Request.RequestStatus.CONFIRMED,
                 eventFullDto.getId());
         eventFullDto.setConfirmedRequests(confirmedRequests.size());
-        return eventFullDto;
+        EventRatingsDto eventRatingsDto = ratingService.getEventRatings(eventFullDto.getId());
+        return eventMapper.toEventFullDto(eventRatingsDto, eventFullDto);
     }
 
     private Event creatingNewEvent(NewEventDto newEvent, User user, Category category) {
         return new Event(null, newEvent.getAnnotation(), category, LocalDateTime.now(), newEvent.getDescription(),
                 newEvent.getEventDate(), user, newEvent.getLocation(), newEvent.getPaid(), newEvent.getParticipantLimit(),
-                true, null, newEvent.getRequestModeration(), Event.State.PENDING, newEvent.getTitle(), 0L);
+                true, null, newEvent.getRequestModeration(), Event.State.PENDING,
+                newEvent.getTitle(), 0L, 0L);
     }
 }

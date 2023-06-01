@@ -3,9 +3,11 @@ package ru.practicum.explore.main.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import ru.practicum.explore.main.category.model.Category;
+import ru.practicum.explore.main.user.dto.UserDto;
 import ru.practicum.explore.main.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class EventShortDto {
@@ -27,4 +29,10 @@ public class EventShortDto {
     private boolean available;
 
     private String title;
+
+    private Long calculatedRating;
+
+    private List<UserDto> likes;
+
+    private List<UserDto> dislikes;
 }

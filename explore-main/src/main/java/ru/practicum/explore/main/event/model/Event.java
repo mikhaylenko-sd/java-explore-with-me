@@ -74,6 +74,8 @@ public class Event {
     private String title;
     @Column(name = "event_views", nullable = false)
     private Long views;
+    @Column(name = "calculated_rating", nullable = false)
+    private Long calculatedRating;
 
     public enum State {
         PENDING,
